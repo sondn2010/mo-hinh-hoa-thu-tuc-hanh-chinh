@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dvc_vn_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dvc_vietnam}
+      POSTGRES_USER: ${POSTGRES_USER:-dvc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dvc_secret_2026}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dvc_user} -d ${POSTGRES_DB:-dvc_vietnam}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: dvc_vn_web
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dvc_user}:${POSTGRES_PASSWORD:-dvc_secret_2026}@postgres:5432/${POSTGRES_DB:-dvc_vietnam}
+      PROCEDURES_DIR: /app/procedures
+      AUTO_SYNC_ON_STARTUP: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./procedures:/app/procedures
+
+volumes:
+  pg_data:

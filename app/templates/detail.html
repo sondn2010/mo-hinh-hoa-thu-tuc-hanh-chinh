@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Hành chính Công VN{% endblock %}
+
+{% block content %}
+<div class="container detail-wrap">
+  <nav class="breadcrumb">
+    <a href="/">← Quay lại danh sách</a>
+    <span>/</span>
+    <a href="/?ministry={{ item.ministry | urlencode }}">{{ item.ministry }}</a>
+    <span>/</span>
+    <span>{{ item.sector }}</span>
+  </nav>
+
+  <header class="detail-hero">
+    <div class="detail-badges">
+      <span class="badge-ministry">{{ item.ministry }}</span>
+      <span class="badge-sector">{{ item.sector }}</span>
+      {% if item.code %}
+      <span class="badge-code">Mã TTHC: {{ item.code }}</span>
+      {% endif %}
+    </div>
+    <h1>{{ item.title }}</h1>
+    <p class="detail-summary">{{ item.summary }}</p>
+
+    <div class="cta-bar">
+      {% if item.portal_url %}
+      <a href="{{ item.portal_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+        Nộp hồ sơ trực tuyến ({{ item.portal_name }}) ↗
+      </a>
+      {% endif %}
+      {% if item.official_url and item.official_url != item.portal_url %}
+      <a href="{{ item.official_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+        Trang gốc & Tải biểu mẫu (DVC Quốc gia) ↗
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="facts-strip">
+      <div class="fact-box">
+        <span class="fact-label">Thời hạn giải quyết</span>
+        <strong>{{ item.processing_time or "Theo quy định" }}</strong>
+      </div>
+      <div class="fact-box">
+        <span class="fact-label">Mức độ trực tuyến</span>
+        <strong>{{ item.online_level or "Trực tuyến / Trực tiếp" }}</strong>
+      </div>
+      <div class="fact-box">
+        <span class="fact-label">Lệ phí</span>
+        <strong>{{ item.fee or "Xem chi tiết trang gốc" }}</strong>
+      </div>
+      <div class="fact-box">
+        <span class="fact-label">Cấp thực hiện</span>
+        <strong>{{ item.level or "Theo phân cấp" }}</strong>
+      </div>
+    </div>
+  </header>
+
+  {% if item.steps %}
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Các bước thực hiện nhanh</h2>
+      <button type="button" class="help-tip" aria-label="Giải thích danh sách bước">
+        ?
+        <span class="help-bubble">
+          Các bước được trích xuất tự động từ file Markdown <code>{{ item.source_path }}</code> để người dùng nắm lộ trình trong 30 giây.
+        </span>
+      </button>
+    </div>
+    <ol class="stepper">
+      {% for st in item.steps %}
+      <li class="step-card">
+        <div class="step-num">{{ st.index }}</div>
+        <div class="step-body">
+          <h3>{{ st.title }}</h3>
+          <p>{{ st.description_html | safe }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  {% if item.mermaid_code %}
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title-group">
+        <h2>Sơ đồ quy trình trực quan (Mermaid)</h2>
+        <button type="button" class="help-tip" aria-label="Hướng dẫn dùng sơ đồ Mermaid">
+          ?
+          <span class="help-bubble">
+            Sơ đồ được vẽ trực tiếp từ khối <code>```mermaid</code> trong file Markdown. Bạn có thể phóng to, thu nhỏ hoặc sao chép mã nguồn Mermaid để tái sử dụng.
+          </span>
+        </button>
+      </div>
+      <div class="diagram-controls">
+        <button type="button" class="btn-mini" onclick="zoomMermaid(-0.15)">− Thu nhỏ</button>
+        <button type="button" class="btn-mini" onclick="resetMermaid()">100%</button>
+        <button type="button" class="btn-mini" onclick="zoomMermaid(0.15)">+ Phóng to</button>
+        <button type="button" class="btn-mini" onclick="copyMermaid(this)">Sao chép mã</button>
+      </div>
+    </div>
+    <div class="mermaid-stage" id="mermaidStage">
+      <div class="mermaid-inner" id="mermaidInner">
+        <pre class="mermaid" id="mermaidDiagram">{{ item.mermaid_code }}</pre>
+      </div>
+    </div>
+    <textarea id="rawMermaid" class="sr-only" readonly>{{ item.mermaid_code }}</textarea>
+  </section>
+  {% endif %}
+
+  <section class="panel markdown-body">
+    <div class="panel-head">
+      <h2>Chi tiết hồ sơ, biểu mẫu & căn cứ pháp lý</h2>
+      <span class="source-tag">File nguồn: <code>{{ item.source_path }}</code></span>
+    </div>
+    {{ item.body_html | safe }}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    securityLevel: "loose",
+    flowchart: { curve: "basis", htmlLabels: true, padding: 14 },
+    themeVariables: {
+      fontFamily: "Plus Jakarta Sans, Be Vietnam Pro, sans-serif",
+      primaryColor: "#eff6ff",
+      primaryTextColor: "#0f172a",
+      primaryBorderColor: "#1d4ed8",
+      lineColor: "#475569",
+      secondaryColor: "#f0fdf4",
+      tertiaryColor: "#fefce8",
+    },
+  });
+</script>
+<script>
+  let currentScale = 1;
+  function zoomMermaid(delta) {
+    currentScale = Math.min(2.0, Math.max(0.55, currentScale + delta));
+    const inner = document.getElementById("mermaidInner");
+    if (inner) inner.style.transform = `scale(${currentScale})`;
+  }
+  function resetMermaid() {
+    currentScale = 1;
+    const inner = document.getElementById("mermaidInner");
+    if (inner) inner.style.transform = "scale(1)";
+  }
+  function copyMermaid(btn) {
+    const raw = document.getElementById("rawMermaid");
+    if (!raw) return;
+    navigator.clipboard.writeText(raw.value).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = "Đã sao chép ✓";
+      setTimeout(() => (btn.textContent = orig), 1600);
+    });
+  }
+</script>
+{% endblock %}

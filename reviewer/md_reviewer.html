@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown & Mermaid Reviewer — Thủ tục Hành chính Công VN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"></script>
+  <style>
+    body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+    code, pre, textarea { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .md-prose h2 { font-family: "Be Vietnam Pro", sans-serif; font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 1.25rem; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid #e2e8f0; }
+    .md-prose h3 { font-family: "Be Vietnam Pro", sans-serif; font-size: 0.98rem; font-weight: 700; color: #1e293b; margin-top: 1rem; margin-bottom: 0.35rem; }
+    .md-prose p { margin-bottom: 0.65rem; color: #334155; font-size: 0.92rem; line-height: 1.6; }
+    .md-prose ul, .md-prose ol { padding-left: 1.25rem; margin-bottom: 0.75rem; color: #334155; font-size: 0.92rem; }
+    .md-prose ul { list-style: disc; }
+    .md-prose ol { list-style: decimal; }
+    .md-prose li { margin-bottom: 0.3rem; }
+    .md-prose a { color: #1d4ed8; font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+    .md-prose table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.85rem; }
+    .md-prose th, .md-prose td { border: 1px solid #e2e8f0; padding: 0.5rem 0.65rem; text-align: left; }
+    .md-prose th { background: #f8fafc; font-weight: 600; color: #0f172a; }
+    .help-tip { position: relative; }
+    .help-tip .help-bubble { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 250px; background: #0f172a; color: #f8fafc; font-size: 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; z-index: 60; box-shadow: 0 10px 24px rgba(15,23,42,0.25); text-align: left; font-weight: 400; }
+    .help-tip:hover .help-bubble, .help-tip.open .help-bubble { display: block; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+  <!-- Top Toolbar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-700 to-red-600 text-yellow-200 font-extrabold text-xs grid place-items-center shrink-0" style="font-family: 'Be Vietnam Pro', sans-serif;">MD</span>
+        <div>
+          <h1 class="text-base font-bold leading-tight text-slate-900" style="font-family: 'Be Vietnam Pro', sans-serif;">MD &amp; Mermaid Reviewer</h1>
+          <p class="text-xs text-slate-500">Kiểm tra file quy trình trước khi nạp vào PostgreSQL</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <input type="file" id="mdFileInput" accept=".md,.markdown,text/markdown,text/plain" class="hidden" />
+        <button type="button" id="openFileBtn" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold transition">
+          Mở file .md
+        </button>
+
+        <select id="sampleSelect" aria-label="Chọn mẫu thủ tục" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium text-slate-700">
+          <option value="ho_chieu">Mẫu: Cấp hộ chiếu phổ thông</option>
+          <option value="khai_sinh">Mẫu: Khai sinh liên thông</option>
+          <option value="template">Mẫu trống: _template.md</option>
+        </select>
+
+        <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
+          <button type="button" data-view-mode="split" class="px-2.5 py-1 rounded-md bg-blue-700 text-white transition">Split</button>
+          <button type="button" data-view-mode="preview" class="px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-100 transition">Preview</button>
+          <button type="button" data-view-mode="editor" class="px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-100 transition">Source</button>
+        </div>
+
+        <button type="button" id="copyMdBtn" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700">
+          Copy .md
+        </button>
+        <button type="button" id="downloadBtn" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700">
+          Tải .md
+        </button>
+
+        <button type="button" class="help-tip w-7 h-7 rounded-full border border-slate-300 bg-slate-100 text-slate-600 text-xs font-bold grid place-items-center" aria-label="Hướng dẫn sử dụng">
+          ?
+          <span class="help-bubble">
+            Kéo thả bất kỳ file <strong>.md</strong> nào vào trang hoặc bấm <strong>Mở file .md</strong> để xem trước sơ đồ Mermaid, kiểm tra YAML frontmatter và từng bước thực hiện.
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Validation Bar -->
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div id="validationBar" class="flex flex-wrap items-center gap-1.5"></div>
+      <span id="fileNameBadge" class="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">03-cap-ho-chieu-pho-thong.md</span>
+    </div>
+  </div>
+
+  <!-- Split Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-4">
+    <div id="workspaceGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <!-- Left: Markdown Editor -->
+      <section id="editorPane" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wide text-slate-600">Markdown Source (YAML + Mermaid)</span>
+          <span class="text-xs text-slate-500">Kéo thả file .md vào bất kỳ đâu</span>
+        </div>
+        <textarea
+          id="mdEditor"
+          spellcheck="false"
+          class="w-full min-h-[680px] p-4 text-xs sm:text-sm leading-relaxed text-slate-800 bg-white outline-none resize-y"
+          placeholder="Dán hoặc kéo thả nội dung file .md vào đây..."
+        ></textarea>
+      </section>
+
+      <!-- Right: Rendered Review Preview -->
+      <section id="previewPane" class="space-y-4">
+        <div id="previewHeader" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"></div>
+
+        <!-- Step-by-step Cards -->
+        <div id="stepsSection" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-slate-900" style="font-family: 'Be Vietnam Pro', sans-serif;">Các bước thực hiện ngắn gọn</h3>
+            <button type="button" class="help-tip w-6 h-6 rounded-full border border-slate-300 bg-slate-100 text-slate-600 text-xs font-bold grid place-items-center" aria-label="Giải thích trích xuất bước">
+              ?
+              <span class="help-bubble">Tự động trích xuất từ mục <code>## Các bước thực hiện ngắn gọn</code> với định dạng <code>1. **Tên bước**: Mô tả</code>.</span>
+            </button>
+          </div>
+          <ol id="stepsList" class="space-y-2.5"></ol>
+        </div>
+
+        <!-- Mermaid Diagram Stage -->
+        <div id="mermaidSection" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-base font-bold text-slate-900" style="font-family: 'Be Vietnam Pro', sans-serif;">Sơ đồ quy trình (Mermaid)</h3>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" id="zoomOutBtn" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">−</button>
+              <button type="button" id="zoomResetBtn" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">100%</button>
+              <button type="button" id="zoomInBtn" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">+</button>
+              <button type="button" id="copyMermaidBtn" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Copy Mermaid</button>
+            </div>
+          </div>
+          <div id="mermaidError" class="hidden mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 font-mono"></div>
+          <div class="border border-dashed border-slate-300 rounded-xl bg-slate-50/70 p-4 overflow-auto text-center">
+            <div id="mermaidRender" class="inline-block origin-top transition-transform"></div>
+          </div>
+        </div>
+
+        <!-- Full Markdown Preview -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div id="markdownPreview" class="md-prose"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Drag & Drop Overlay -->
+  <div id="dropOverlay" class="hidden fixed inset-0 z-50 bg-blue-900/50 backdrop-blur-sm grid place-items-center p-6">
+    <div class="bg-white rounded-2xl border-2 border-dashed border-blue-500 px-10 py-8 text-center shadow-xl">
+      <p class="text-lg font-bold text-slate-900" style="font-family: 'Be Vietnam Pro', sans-serif;">Thả file Markdown (.md) vào đây</p>
+      <p class="text-sm text-slate-500 mt-1">Tự động phân tích YAML, sơ đồ Mermaid và các bước thực hiện</p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-lg opacity-0 pointer-events-none transition-opacity duration-200"></div>
+
+  <script src="./md_reviewer.js"></script>
+</body>
+</html>

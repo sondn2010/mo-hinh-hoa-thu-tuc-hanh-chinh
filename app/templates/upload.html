@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Cập nhật thủ tục từ file Markdown — Hành chính Công VN{% endblock %}
+
+{% block content %}
+<div class="container detail-wrap">
+  <nav class="breadcrumb">
+    <a href="/">← Quay lại trang tra cứu</a>
+    <span>/</span>
+    <span>Cập nhật mở từ file Markdown</span>
+  </nav>
+
+  <header class="detail-hero">
+    <div class="panel-title-group">
+      <h1>Cập nhật quy trình thủ tục mới (.md)</h1>
+      <button type="button" class="help-tip" aria-label="Hướng dẫn mở rộng hệ thống">
+        ?
+        <span class="help-bubble">
+          Hệ thống thiết kế mở: mọi file <code>.md</code> có cấu trúc YAML Frontmatter và khối <code>```mermaid</code> đều có thể nạp tự động vào cơ sở dữ liệu mà không cần sửa code.
+        </span>
+      </button>
+    </div>
+    <p class="detail-summary">
+      Hiện đang có <strong>{{ total_all }}</strong> thủ tục trong cơ sở dữ liệu (<code>{{ engine_name }}</code>). Bạn có thể chọn 1 trong 3 cách dưới đây để thêm hoặc cập nhật thủ tục mới.
+    </p>
+
+    {% if msg %}
+    <div class="alert alert-success">{{ msg }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+  </header>
+
+  <div class="upload-grid">
+    <!-- Cách 1: Tải lên file .md -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Cách 1: Tải lên file Markdown (.md)</h2>
+      </div>
+      <p class="muted">File sẽ được lưu vào thư mục <code>procedures/</code> và đánh chỉ mục tìm kiếm ngay lập tức.</p>
+      <form action="/cap-nhat/upload" method="post" enctype="multipart/form-data" class="stack-form">
+        <label class="field">
+          <span>Chọn tệp <code>.md</code></span>
+          <input type="file" name="file" accept=".md,text/markdown" required />
+        </label>
+        <label class="field">
+          <span>Thư mục nhóm bộ/ngành (không dấu)</span>
+          <input type="text" name="subfolder" value="custom" placeholder="VD: bo-cong-an, bo-y-te, custom" />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Tải lên & Nạp vào DB</button>
+          <a href="/api/template" class="btn btn-secondary">Tải file mẫu _template.md</a>
+        </div>
+      </form>
+    </section>
+
+    <!-- Cách 2: Đồng bộ thư mục procedures/ -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Cách 2: Đồng bộ thư mục <code>procedures/</code></h2>
+      </div>
+      <p class="muted">
+        Nếu bạn đã copy hoặc kéo Git pull các file <code>.md</code> mới vào thư mục <code>procedures/</code> trên máy chủ, bấm nút dưới đây để quét lại (chỉ cập nhật những file có thay đổi nội dung SHA-256).
+      </p>
+      <form action="/cap-nhat/sync" method="post" class="stack-form">
+        <button type="submit" class="btn btn-primary">Đồng bộ toàn bộ thư mục ngay</button>
+      </form>
+      <p class="muted small-note">
+        Hoặc chạy qua CLI: <code>python scripts/sync_md.py</code> · API: <code>POST /api/sync</code>
+      </p>
+    </section>
+  </div>
+
+  <!-- Cách 3: Soạn thảo trực tiếp -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Cách 3: Soạn hoặc dán nội dung Markdown trực tiếp</h2>
+    </div>
+    <form action="/cap-nhat/soan-moi" method="post" class="stack-form">
+      <label class="field">
+        <span>Thư mục lưu</span>
+        <input type="text" name="subfolder" value="custom" placeholder="VD: bo-giao-duc, bo-y-te, custom" />
+      </label>
+      <label class="field">
+        <span>Nội dung Markdown (gồm YAML frontmatter & sơ đồ Mermaid)</span>
+        <textarea name="markdown_content" rows="18" class="code-editor" required>{{ template_text }}</textarea>
+      </label>
+      <button type="submit" class="btn btn-primary">Lưu file .md & Xuất bản ngay</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

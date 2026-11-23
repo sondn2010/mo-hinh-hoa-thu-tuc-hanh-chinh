@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Tra cứu Thủ tục Hành chính Công Việt Nam{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      {% if "PostgreSQL" in engine_name %}
+      Nguồn mở Markdown + Mermaid · Tối ưu tìm kiếm PostgreSQL
+      {% else %}
+      Nguồn mở Markdown + Mermaid · Tìm kiếm siêu tốc SQLite FTS5
+      {% endif %}
+    </div>
+    <h1>Tra cứu thủ tục hành chính<br />ngắn gọn theo từng bước</h1>
+    <p class="hero-sub">
+      Xem nhanh sơ đồ quy trình trực quan, danh mục hồ sơ cần chuẩn bị và đi thẳng tới trang nộp hồ sơ trực tuyến chính thức của Chính phủ và các Bộ, ngành.
+    </p>
+
+    <form action="/" method="get" class="search-box" role="search">
+      <div class="search-input-wrap">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          type="text"
+          name="q"
+          id="searchInput"
+          value="{{ q }}"
+          placeholder="Nhập tên thủ tục, mã số hoặc từ khóa (VD: ho chieu, can cuoc, so do, thue tncn)..."
+          autocomplete="off"
+        />
+        <button type="button" class="help-tip" aria-label="Hướng dẫn tìm kiếm">
+          ?
+          <span class="help-bubble">
+            Hỗ trợ gõ tiếng Việt <strong>có dấu hoặc không dấu</strong> (VD: <em>"ho chieu"</em>, <em>"khai sinh"</em>, <em>"1.002809"</em>). Cơ sở dữ liệu: <strong>{{ engine_name }}</strong>.
+          </span>
+        </button>
+      </div>
+      {% if selected_ministry %}
+      <input type="hidden" name="ministry" value="{{ selected_ministry }}" />
+      {% endif %}
+      <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+    </form>
+
+    <div class="quick-tags">
+      <span class="muted">Tìm nhanh:</span>
+      <a href="/?q=hộ chiếu" class="chip">Hộ chiếu</a>
+      <a href="/?q=căn cước" class="chip">Thẻ Căn cước</a>
+      <a href="/?q=khai sinh" class="chip">Khai sinh liên thông</a>
+      <a href="/?q=gplx" class="chip">Đổi GPLX</a>
+      <a href="/?q=doanh nghiệp" class="chip">Mở công ty</a>
+      <a href="/?q=sổ đỏ" class="chip">Sổ đỏ</a>
+      <a href="/?q=thuế tncn" class="chip">Thuế TNCN</a>
+    </div>
+  </div>
+</section>
+
+<section class="container section-block">
+  <div class="filter-header">
+    <div class="filter-title-row">
+      <h2>Lọc theo Bộ / Cơ quan chủ quản</h2>
+      <button type="button" class="help-tip" aria-label="Giải thích bộ lọc">
+        ?
+        <span class="help-bubble">
+          Danh sách Bộ/Ngành tự động cập nhật ngay khi bạn thêm file Markdown mới vào thư mục <code>procedures/</code> hoặc tải lên tại mục <strong>Cập nhật file MD</strong>.
+        </span>
+      </button>
+    </div>
+    <span class="result-count">Hiển thị <strong>{{ items|length }}</strong> / {{ total_all }} thủ tục</span>
+  </div>
+
+  <div class="ministry-pills">
+    <a href="/{% if q %}?q={{ q }}{% endif %}" class="pill {% if not selected_ministry %}active{% endif %}">
+      Tất cả <span class="pill-count">{{ total_all }}</span>
+    </a>
+    {% for m in facets.ministries %}
+    <a
+      href="/?ministry={{ m.name | urlencode }}{% if q %}&q={{ q | urlencode }}{% endif %}"
+      class="pill {% if selected_ministry == m.name %}active{% endif %}"
+    >
+      {{ m.name }} <span class="pill-count">{{ m.count }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if items %}
+  <div class="cards-grid">
+    {% for item in items %}
+    <article class="proc-card">
+      <div class="card-top">
+        <span class="badge-ministry">{{ item.ministry }}</span>
+        {% if item.code %}
+        <span class="badge-code">Mã: {{ item.code }}</span>
+        {% endif %}
+      </div>
+
+      <h3 class="card-title">
+        <a href="/thu-tuc/{{ item.slug }}">{{ item.title }}</a>
+      </h3>
+
+      <p class="card-summary">{{ item.summary }}</p>
+
+      <div class="card-meta">
+        {% if item.processing_time %}
+        <div class="meta-item">
+          <span class="meta-label">Thời hạn</span>
+          <span class="meta-val">{{ item.processing_time }}</span>
+        </div>
+        {% endif %}
+        {% if item.steps %}
+        <div class="meta-item">
+          <span class="meta-label">Quy trình</span>
+          <span class="meta-val">{{ item.steps|length }} bước ngắn gọn + Sơ đồ</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="card-actions">
+        <a href="/thu-tuc/{{ item.slug }}" class="btn btn-secondary">Xem sơ đồ & các bước →</a>
+        {% if item.portal_url %}
+        <a href="{{ item.portal_url }}" target="_blank" rel="noopener noreferrer" class="link-external" title="Mở trang nộp hồ sơ chính thức">
+          Nộp online ↗
+        </a>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>Không tìm thấy thủ tục phù hợp với "{{ q }}"</h3>
+    <p class="muted">Thử từ khóa ngắn hơn (không dấu hoặc có dấu) hoặc bổ sung quy trình mới bằng file Markdown.</p>
+    <div class="empty-actions">
+      <a href="/" class="btn btn-secondary">Xem tất cả thủ tục</a>
+      <a href="/cap-nhat" class="btn btn-primary">+ Thêm thủ tục mới (.md)</a>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

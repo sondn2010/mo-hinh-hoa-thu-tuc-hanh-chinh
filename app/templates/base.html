@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Tra cứu Thủ tục Hành chính Công Việt Nam{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="/" class="brand">
+        <span class="brand-mark" aria-hidden="true">VN</span>
+        <span class="brand-text">
+          <strong>Hành chính Công VN</strong>
+          <small>Sơ đồ quy trình từng bước</small>
+        </span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Tra cứu thủ tục</a>
+        <a href="/cap-nhat" class="nav-link nav-cta {% if request.url.path.startswith('/cap-nhat') %}active{% endif %}">+ Cập nhật file MD</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>Cổng Tra cứu Quy trình Thủ tục Hành chính Công Việt Nam</strong>
+        <p class="muted">Dữ liệu mở từ thư mục <code>procedures/*.md</code> · Cơ sở dữ liệu: <code>{{ engine_name }}</code></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://dichvucong.gov.vn" target="_blank" rel="noopener noreferrer">Cổng DVC Quốc gia ↗</a>
+        <a href="/api/procedures" target="_blank">JSON API</a>
+        <a href="/api/template">Tải mẫu .md</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Accessible click/focus toggle for '?' help tooltips on mobile & desktop
+    document.addEventListener("click", function (e) {
+      const btn = e.target.closest(".help-tip");
+      document.querySelectorAll(".help-tip.open").forEach((el) => {
+        if (el !== btn) el.classList.remove("open");
+      });
+      if (btn) {
+        e.preventDefault();
+        btn.classList.toggle("open");
+      }
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
